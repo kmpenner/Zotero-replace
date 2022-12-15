@@ -2,6 +2,8 @@
  Search and replace functionality for Zotero
 
  # Instructions
- Paste this code into Zotero through Tools->Developer->Run JavaScript
- Edit the first few lines to meet your needs
- Click Run
+1. Paste this code into Zotero through Tools->Developer->Run JavaScript
+
+2. Edit the first few lines to meet your needs
+
+3. Click Run
