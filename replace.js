@@ -8,6 +8,12 @@
 // so the regExFil should include the colon and double quotes like /"firstName":"Ken(neth)?"/gm
 // and the replaceText should be in single quotes and double quotes like '"firstName":"Ken M."'
 
+// Example to remove trailing comma in a creator's name:
+//var fieldName = "creator";
+//var regExFilt = /(.+[a-z]),(",)/g;
+//var replaceText = "$1$2";
+
+
 var fieldName = "title";
 var regExFilt = /  /gm;
 var replaceText = " ";
