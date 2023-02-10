@@ -4,13 +4,13 @@
 // combined with code from https://forums.zotero.org/discussion/7707/find-and-replace-on-multiple-items/p2
 // by tanaree https://forums.zotero.org/profile/1648161/tanaree April 17, 2014
 
-// For creators, sample JSON is [{"fieldMode":0,"firstName":"Israel","lastName":"Knohl","creatorTypeID":1}]
-// so the regExFil should include the colon and double quotes like /"firstName":"Ken(neth)?"/gm
-// and the replaceText should be in single quotes and double quotes like '"firstName":"Ken M."'
+// For creators, the JSON looks like [{"fieldMode":0,"firstName":"Ken","lastName":"Penner","creatorTypeID":1}]
+// so the regExFil should include the colon and double quotes like /"firstName":"Ken(neth)?( M\.)?","lastName":"Penner"/gm
+// and the replaceText should be in single quotes and double quotes like '"firstName":"Ken M.","lastName":"Penner"'
 
-var fieldName = "title";
-var regExFilt = /  /gm;
-var replaceText = " ";
+var fieldName = "creator";
+var regExFilt = /"firstName":"Ken(neth)?( M\.)?","lastName":"Penner"/gm;
+var replaceText = '"firstName":"Ken M.","lastName":"Penner"';
 
 var oldValue = "";
 var changes = 0;
@@ -27,8 +27,7 @@ await Zotero.DB.executeTransaction(async function () {
         if (newValue != oldValue) {
             changes++;
             switch (fieldName) {
-                case "creator":
-                    item.setCreators(JSON.parse(newValue)); break;
+                case "creator": item.setCreators(JSON.parse(newValue)); break;
                 default:
                     let mappedFieldID = Zotero.ItemFields.getFieldIDFromTypeAndBase(item.itemTypeID, fieldName);
                     item.setField(mappedFieldID ? mappedFieldID : fieldID, newValue);
