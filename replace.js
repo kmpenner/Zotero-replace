@@ -28,10 +28,15 @@
 //const regExFilt = /("firstName":"[A-Za-z ]+)(","lastName":")([Dd]e|[Vv]an|[Dd]er|[Ll]e|[Vv]on) /gm;
 //const replaceText = "$1 $3$2"
 
+// Example to Title case an UPPERCASE surname:
+const fieldName = "creator";
+const regExFilt = /("lastName":"[A-Z\u00C0-\u00DC])([A-Z\u00C0-\u00DC]+)(")/u;
+const replaceText = (match, p1, p2, p3) => p1 + p2.toLowerCase() + p3;
 
-var fieldName = "title";
-var regExFilt = /  /gm;
-var replaceText = " ";
+// Example to change *AQ: to Q: in a note:
+//var fieldName = "note";
+//var regExFilt = /\*AQ:/gm;
+//var replaceText = "Q:";
 
 var oldValue = "";
 var changes = 0;
