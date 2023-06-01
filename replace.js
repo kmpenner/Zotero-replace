@@ -44,41 +44,63 @@
 //const replaceText = "";
 
 // Example to add period after first initial:
-const fieldName = "creator";
-const regExFilt = /("firstName":"[A-Z])( )/g;
-const replaceText = "$1\.$2";
-// Example to add period after final initial:
 //const fieldName = "creator";
-//const regExFilt = /("firstName":"[A-Z a-z]*[A-Z])(")/g;
+//const regExFilt = /("firstName":"[A-Z])( )/g;
+//const replaceText = "$1\.$2";
+
+// Example to add period after final initial:S
+//const fieldName = "creator";
+//const regExFilt = /("firstName":"[A-Z a-z]*[A-Z])(")/g;S
 //const replaceText = "$1\.$2";
 // Example to add period after medial initial:
 //const fieldName = "creator";
 //const regExFilt = /("firstName":"[A-Z a-z.]*[A-Z])( )/g;
 //const replaceText = "$1\.$2";
 
+const fieldDataList = [
+    {
+        fieldName: "creator",
+        regExFilt: /("firstName":"[A-Z])( )/g,
+        replaceText: "$1\.$2"
+    },
+    // Add more fieldData objects as needed
+];
 
-var oldValue = "";
-var changes = 0;
-var fieldID = Zotero.ItemFields.getID(fieldName);
-var items = Zotero.getActiveZoteroPane().getSelectedItems();
+var totalChanges = 0;
 
-await Zotero.DB.executeTransaction(async function () {
-    for (let item of items) {
-        switch (fieldName) {
-            case "creator": oldValue = JSON.stringify(item.getCreators()); break;
-            default: oldValue = item.getField(fieldName);
-        }
-        newValue = oldValue.replace(regExFilt, replaceText);
-        if (newValue != oldValue) {
-            changes++;
-            switch (fieldName) {
-                case "creator": item.setCreators(JSON.parse(newValue)); break;
+for (const fieldData of fieldDataList) {
+    var changes = 0;
+    var oldValue = "";
+    var fieldID = Zotero.ItemFields.getID(fieldData.fieldName);
+    var items = Zotero.getActiveZoteroPane().getSelectedItems();
+
+    await Zotero.DB.executeTransaction(async function () {
+        for (let item of items) {
+            switch (fieldData.fieldName) {
+                case "creator":
+                    oldValue = JSON.stringify(item.getCreators());
+                    break;
                 default:
-                    let mappedFieldID = Zotero.ItemFields.getFieldIDFromTypeAndBase(item.itemTypeID, fieldName);
-                    item.setField(mappedFieldID ? mappedFieldID : fieldID, newValue);
+                    oldValue = item.getField(fieldData.fieldName);
             }
-            await item.save();
+            newValue = oldValue.replace(fieldData.regExFilt, fieldData.replaceText);
+            if (newValue != oldValue) {
+                changes++;
+                switch (fieldData.fieldName) {
+                    case "creator":
+                        item.setCreators(JSON.parse(newValue));
+                        break;
+                    default:
+                        let mappedFieldID = Zotero.ItemFields.getFieldIDFromTypeAndBase(item.itemTypeID, fieldData.fieldName);
+                        item.setField(mappedFieldID ? mappedFieldID : fieldID, newValue);
+                }
+                await item.save();
+            }
         }
-    }
-});
-return changes + " item(s) modified";
+    });
+
+    console.log(changes + " item(s) modified for fieldName: " + fieldData.fieldName);
+    totalChanges += changes;
+}
+
+return totalChanges + " item(s) modified in total";
