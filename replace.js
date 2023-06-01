@@ -29,14 +29,33 @@
 //const replaceText = "$1 $3$2"
 
 // Example to Title case an UPPERCASE surname:
-const fieldName = "creator";
-const regExFilt = /("lastName":"[A-Z\u00C0-\u00DC])([A-Z\u00C0-\u00DC]+)(")/u;
-const replaceText = (match, p1, p2, p3) => p1 + p2.toLowerCase() + p3;
+//const fieldName = "creator";
+//const regExFilt = /("lastName":"[A-Z\u00C0-\u00DC])([A-Z\u00C0-\u00DC]+)(")/u;
+//const replaceText = (match, p1, p2, p3) => p1 + p2.toLowerCase() + p3;
 
 // Example to change *AQ: to Q: in a note:
 //var fieldName = "note";
 //var regExFilt = /\*AQ:/gm;
 //var replaceText = "Q:";
+
+// Example in publisher:
+//const fieldName = "publisher";
+//const regExFilt = /Publishing Plc,/m;
+//const replaceText = "";
+
+// Example to add period after first initial:
+const fieldName = "creator";
+const regExFilt = /("firstName":"[A-Z])( )/g;
+const replaceText = "$1\.$2";
+// Example to add period after final initial:
+//const fieldName = "creator";
+//const regExFilt = /("firstName":"[A-Z a-z]*[A-Z])(")/g;
+//const replaceText = "$1\.$2";
+// Example to add period after medial initial:
+//const fieldName = "creator";
+//const regExFilt = /("firstName":"[A-Z a-z.]*[A-Z])( )/g;
+//const replaceText = "$1\.$2";
+
 
 var oldValue = "";
 var changes = 0;
