@@ -48,59 +48,78 @@
 //const regExFilt = /("firstName":"[A-Z])( )/g;
 //const replaceText = "$1\.$2";
 
-// Example to add period after final initial:S
+// Example to add period after final initial:
 //const fieldName = "creator";
-//const regExFilt = /("firstName":"[A-Z a-z]*[A-Z])(")/g;S
+//const regExFilt = /("firstName":"[A-Z a-z]*[A-Z])(")/g;
 //const replaceText = "$1\.$2";
 // Example to add period after medial initial:
 //const fieldName = "creator";
 //const regExFilt = /("firstName":"[A-Z a-z.]*[A-Z])( )/g;
 //const replaceText = "$1\.$2";
 
-const fieldDataList = [
-    {
-        fieldName: "creator",
-        regExFilt: /("firstName":"[A-Z])( )/g,
-        replaceText: "$1\.$2"
-    },
-    // Add more fieldData objects as needed
-];
+// Prompt the user to enter the file path
+const filePath = prompt("Please enter the URL of the file containing fieldDataList:");
 
-var totalChanges = 0;
+if (filePath) {
+    // Read the file contents
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", filePath, false);
+    xhr.send(null);
 
-for (const fieldData of fieldDataList) {
-    var changes = 0;
-    var oldValue = "";
-    var fieldID = Zotero.ItemFields.getID(fieldData.fieldName);
-    var items = Zotero.getActiveZoteroPane().getSelectedItems();
+    if (xhr.status === 200) {
+        const fileContents = xhr.responseText;
 
-    await Zotero.DB.executeTransaction(async function () {
-        for (let item of items) {
-            switch (fieldData.fieldName) {
-                case "creator":
-                    oldValue = JSON.stringify(item.getCreators());
-                    break;
-                default:
-                    oldValue = item.getField(fieldData.fieldName);
-            }
-            newValue = oldValue.replace(fieldData.regExFilt, fieldData.replaceText);
-            if (newValue != oldValue) {
-                changes++;
-                switch (fieldData.fieldName) {
-                    case "creator":
-                        item.setCreators(JSON.parse(newValue));
-                        break;
-                    default:
-                        let mappedFieldID = Zotero.ItemFields.getFieldIDFromTypeAndBase(item.itemTypeID, fieldData.fieldName);
-                        item.setField(mappedFieldID ? mappedFieldID : fieldID, newValue);
-                }
-                await item.save();
-            }
+        try {
+            // Parse the file contents as JSON to obtain the fieldDataList
+            const fieldDataList = JSON.parse(fileContents);
+
+            // Call the function that performs the replacement operation with fieldDataList
+            performReplacement(fieldDataList);
+        } catch (error) {
+            console.error("Error parsing JSON file:", error);
         }
-    });
-
-    console.log(changes + " item(s) modified for fieldName: " + fieldData.fieldName);
-    totalChanges += changes;
+    } else {
+        console.error("Error reading file:", xhr.statusText);
+    }
 }
 
-return totalChanges + " item(s) modified in total";
+async function performReplacement(fieldDataList) {
+    var totalChanges = 0;
+
+    for (const fieldData of fieldDataList) {
+        var changes = 0;
+        var oldValue = "";
+        var fieldID = Zotero.ItemFields.getID(fieldData.fieldName);
+        var items = Zotero.getActiveZoteroPane().getSelectedItems();
+
+        await Zotero.DB.executeTransaction(async function () {
+            for (let item of items) {
+                switch (fieldData.fieldName) {
+                    case "creator":
+                        oldValue = JSON.stringify(item.getCreators());
+                        break;
+                    default:
+                        oldValue = item.getField(fieldData.fieldName);
+                }
+                newValue = oldValue.replace(fieldData.regExFilt, fieldData.replaceText);
+                if (newValue != oldValue) {
+                    changes++;
+                    switch (fieldData.fieldName) {
+                        case "creator":
+                            item.setCreators(JSON.parse(newValue));
+                            break;
+                        default:
+                            let mappedFieldID = Zotero.ItemFields.getFieldIDFromTypeAndBase(item.itemTypeID, fieldData.fieldName);
+                            item.setField(mappedFieldID ? mappedFieldID : fieldID, newValue);
+                    }
+                    await item.save();
+                }
+            }
+        });
+
+        console.log(changes + " item(s) modified for fieldName: " + fieldData.fieldName);
+        totalChanges += changes;
+    }
+
+    return totalChanges + " item(s) modified in total";
+}
