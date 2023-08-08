@@ -4,122 +4,142 @@
 // combined with code from https://forums.zotero.org/discussion/7707/find-and-replace-on-multiple-items/p2
 // by tanaree https://forums.zotero.org/profile/1648161/tanaree April 17, 2014
 
-// Example to replace two spaces with one in titles:
-//var fieldName = "title";
-//var regExFilt = /  /gm;
-//var replaceText = " ";
-
 // For creators, sample JSON is [{"fieldMode":0,"firstName":"Israel","lastName":"Knohl","creatorTypeID":1}]
 // so the regExFil should include the colon and double quotes like /"firstName":"Ken(neth)?"/gm
 // and the replaceText should be in single quotes and double quotes like '"firstName":"Ken M."'
 
-// Example to remove trailing comma in a creator's name:
-//var fieldName = "creator";
-//var regExFilt = /(.+[a-z]),(",)/g;
-//var replaceText = "$1$2";
+fieldDataList = [
+    {
+        "name": "creatorTitleCase",
+        "fieldName": "creator",
+        "regExFilt": /("lastName":"[A-Z\u00C0-\u00DC])([A-Z\u00C0-\u00DC]+)(")/u,
+        "replaceText": (match, p1, p2, p3) => p1 + p2.toLowerCase() + p3
+    },
+    {
+        "name": "creatorCommaSplit",
+        "fieldName": "creator",
+        "regExFilt": /"fieldMode":[01],"firstName":"([-. A-Za-zÀ-ÿ]+)?","lastName":"([-. A-Za-zÀ-ÿ]+), ([-. A-Za-zÀ-ÿ]+)"/gm,
+        "replaceText": '"fieldMode":0,"firstName":"$1$3","lastName":"$2"'
+    },
+   {
+        "name": "titleSpace",
+        "fieldName": "title",
+        "regExFilt": "/  /gm",
+        "replaceText": " "
+    },
+       
+    {
+        "name": "creatorComma",
+        "fieldName": "creator",
+        "regExFilt": /(.+[a-z]),(",)/g,
+        "replaceText": "$1$2"
+    },
+     {
+        "name": "creatorInitialDotFirst",
+        "fieldName": "creator",
+        "regExFilt": /("firstName":"[A-Z\u00C0-\u00DC])( )/g,
+        "replaceText": "$1\.$2"
+    },
+    {
+        "name": "creatorInitialDotFinal",
+        "fieldName": "creator",
+        "regExFilt": /("firstName":"[A-Z a-z.\u00C0-\u00DC]*[A-Z\u00C0-\u00DC])(")/g,
+        "replaceText": "$1\.$2"
+    },
+    {
+        "name": "creatorInitialDotMedial",
+        "fieldName": "creator",
+        "regExFilt": /("firstName":"[A-Z a-z.\u00C0-\u00DC]*[A-Z\u00C0-\u00DC])( )/g,
+        "replaceText": "$1\.$2"
+    },
+    {
+        "name": "creatorDotSpace",
+        "fieldName": "creator",
+        "regExFilt": /("firstName":"[-A-Z a-z\u00C0-\u00DC.]*[A-Z\u00C0-\u00DC]\.)([A-Z])/g,
+        "replaceText": "$1 $2"
+    },
+    {
+        "name": "Press",
+        "fieldName": "publisher",
+        "regExFilt": / Press$/gm,
+        "replaceText": ""
+    }/*
+    {
+        "name": "creatorParticle",
+        "fieldName": "creator",
+        "regExFilt": /("firstName":".+)(De|Van|Der|Le|Von|Dos)( |")/gm,
+        "replaceText": (match, p1, p2, p3) => p1 + p2.toLowerCase() + p3
+    }    ,
+    {
+        "name": "creatorMoveParticle",
+        "fieldName": "creator",
+        "regExFilt": /("firstName":"[-A-Za-zÀ-ÿ .]+)(","lastName":")([Dd]e|[Vv]an|[Dd]er|[Ll]e|[Vv]on|[Dd][oa]s) /gm,
+        "replaceText": "$1 $3$2"
+    },
+    {
+        "name": "creatorLiteralToFamilyAndGiven",
+        "fieldName": "creator",
+        "regExFilt": /"fieldMode":[01],"firstName":"([-. A-Za-zÀ-ÿ]+)?","lastName":"([A-Z]\.) ([-. A-Za-zÀ-ÿ]+)"/gm,
+        "replaceText": '"fieldMode":0,"firstName":"$1$2","lastName":"$3"'
+    },
+    {
+        "name": "creatorParticle",
+        "fieldName": "creator",
+        "regExFilt": /("firstName":".+)(De|Van|Der|Le|Von|Dos)( |")/gm,
+        "replaceText": (match, p1, p2, p3) => p1 + p2.toLowerCase() + p3
+    },
+    {
+        "name": "0 page",
+        "fieldName": "pages",
+        "regExFilt": "/^0/",
+        "replaceText": ""
+    },
+    {
+        "name": "Barr",
+        "fieldName": "creator",
+        "regExFilt": /("firstName":")(J[ames.]*)(","lastName":"Barr")/gm,
+        "replaceText": "$1James$3"
+    }*/
+];
 
-// Example to lowercase dropping particles (at the end of given name) in a creator's name:
-//const fieldName = "creator";
-//const regExFilt = /("firstName":".+)(De|Van|Der|Le|Von)( |")/gm;
-//const replaceText = (match, p1, p2, p3) => p1 + p2.toLowerCase() + p3;
+var totalChanges = 0;
+//    alert(JSON.stringify(fieldDataList));
+for (const fieldData of fieldDataList) {
+    var changes = 0;
+    var oldValue = "";
+    var fieldID = Zotero.ItemFields.getID(fieldData.fieldName);
+    var items = Zotero.getActiveZoteroPane().getSelectedItems();
 
-// Example to change a non-dropping particle (at the beginning of the family name) to a dropping particle (at the end of given name):
-//const fieldName = "creator";
-//const regExFilt = /("firstName":"[A-Za-z ]+)(","lastName":")([Dd]e|[Vv]an|[Dd]er|[Ll]e|[Vv]on) /gm;
-//const replaceText = "$1 $3$2"
-
-// Example to Title case an UPPERCASE surname:
-//const fieldName = "creator";
-//const regExFilt = /("lastName":"[A-Z\u00C0-\u00DC])([A-Z\u00C0-\u00DC]+)(")/u;
-//const replaceText = (match, p1, p2, p3) => p1 + p2.toLowerCase() + p3;
-
-// Example to change *AQ: to Q: in a note:
-//var fieldName = "note";
-//var regExFilt = /\*AQ:/gm;
-//var replaceText = "Q:";
-
-// Example in publisher:
-//const fieldName = "publisher";
-//const regExFilt = /Publishing Plc,/m;
-//const replaceText = "";
-
-// Example to add period after first initial:
-//const fieldName = "creator";
-//const regExFilt = /("firstName":"[A-Z])( )/g;
-//const replaceText = "$1\.$2";
-
-// Example to add period after final initial:
-//const fieldName = "creator";
-//const regExFilt = /("firstName":"[A-Z a-z]*[A-Z])(")/g;
-//const replaceText = "$1\.$2";
-// Example to add period after medial initial:
-//const fieldName = "creator";
-//const regExFilt = /("firstName":"[A-Z a-z.]*[A-Z])( )/g;
-//const replaceText = "$1\.$2";
-
-// Prompt the user to enter the file path
-const filePath = prompt("Please enter the URL of the file containing fieldDataList:");
-
-if (filePath) {
-    // Read the file contents
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", filePath, false);
-    xhr.send(null);
-
-    if (xhr.status === 200) {
-        const fileContents = xhr.responseText;
-
-        try {
-            // Parse the file contents as JSON to obtain the fieldDataList
-            const fieldDataList = JSON.parse(fileContents);
-
-            // Call the function that performs the replacement operation with fieldDataList
-            performReplacement(fieldDataList);
-        } catch (error) {
-            console.error("Error parsing JSON file:", error);
-        }
-    } else {
-        console.error("Error reading file:", xhr.statusText);
-    }
-}
-
-async function performReplacement(fieldDataList) {
-    var totalChanges = 0;
-
-    for (const fieldData of fieldDataList) {
-        var changes = 0;
-        var oldValue = "";
-        var fieldID = Zotero.ItemFields.getID(fieldData.fieldName);
-        var items = Zotero.getActiveZoteroPane().getSelectedItems();
-
-        await Zotero.DB.executeTransaction(async function () {
-            for (let item of items) {
+    await Zotero.DB.executeTransaction(async function () {
+        for (let item of items) {
+            switch (fieldData.fieldName) {
+                case "creator":
+                    oldValue = JSON.stringify(item.getCreators());
+//                    alert(oldValue);
+                    break;
+                default:
+                    oldValue = item.getField(fieldData.fieldName);
+            }
+            //                var regex = new RegExp(fieldData.findText);
+            //alert(fieldDataList);
+            newValue = oldValue.replace(fieldData.regExFilt, fieldData.replaceText);
+            if (newValue != oldValue) {
+                changes++;
                 switch (fieldData.fieldName) {
                     case "creator":
-                        oldValue = JSON.stringify(item.getCreators());
+                        item.setCreators(JSON.parse(newValue));
                         break;
                     default:
-                        oldValue = item.getField(fieldData.fieldName);
+                        let mappedFieldID = Zotero.ItemFields.getFieldIDFromTypeAndBase(item.itemTypeID, fieldData.fieldName);
+                        item.setField(mappedFieldID ? mappedFieldID : fieldID, newValue);
                 }
-                newValue = oldValue.replace(fieldData.regExFilt, fieldData.replaceText);
-                if (newValue != oldValue) {
-                    changes++;
-                    switch (fieldData.fieldName) {
-                        case "creator":
-                            item.setCreators(JSON.parse(newValue));
-                            break;
-                        default:
-                            let mappedFieldID = Zotero.ItemFields.getFieldIDFromTypeAndBase(item.itemTypeID, fieldData.fieldName);
-                            item.setField(mappedFieldID ? mappedFieldID : fieldID, newValue);
-                    }
-                    await item.save();
-                }
+                await item.save();
             }
-        });
+        }
+    });
 
-        console.log(changes + " item(s) modified for fieldName: " + fieldData.fieldName);
-        totalChanges += changes;
-    }
-
-    return totalChanges + " item(s) modified in total";
+//    alert(changes + " item(s) modified for : " + fieldData.name);
+    totalChanges += changes;
 }
+
+return totalChanges + " item(s) modified in total";

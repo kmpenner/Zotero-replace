@@ -1,12 +1,12 @@
 [
 	{
 		"fieldName": "creator",
-		"regExFilt": "/(\"firstName\":\"[A-Z])( \")/g",
+		"findText": "(\"firstName\":\"[A-Z])( \")",
 		"replaceText": "$1\\.$2"
 	},
 	{
 		"fieldName": "title",
-		"regExFilt": "/  /gm",
+		"findText": "  ",
 		"replaceText": " "
 	}
 ]
